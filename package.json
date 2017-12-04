@@ -1,0 +1,45 @@
+{
+  "name": "@dendra-science/mysql-export-json",
+  "version": "0.0.1",
+  "description": "Class to export MySQL rows as individual JSON documents.",
+  "license": "BSD-2-Clause-FreeBSD",
+  "author": "J. Scott Smith <scott@newleafsolutionsinc.com>",
+  "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DendraScience/mysql-export-json.git"
+  },
+  "scripts": {
+    "babel": "babel src -d dist",
+    "build": "npm run lint && npm run clean && npm run babel",
+    "clean": "rm -rf dist/*",
+    "lint": "eslint src",
+    "lint-test": "eslint test",
+    "test": "npm run lint-test && NODE_ENV=test mocha test --recursive --use_strict",
+    "test:build": "npm run build && npm run test",
+    "test:watch": "chokidar --initial 'src/**/*.js' 'test/**/*.js' -c 'npm run test:build'"
+  },
+  "engines": {
+    "node": ">=8.7.0"
+  },
+  "dependencies": {
+    "dot-object": "^1.7.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "chai": "^4.1.1",
+    "eslint": "^4.12.0",
+    "eslint-config-standard": "^10.2.1",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-node": "^5.2.1",
+    "eslint-plugin-promise": "^3.6.0",
+    "eslint-plugin-standard": "^3.0.1",
+    "mocha": "^4.0.1",
+    "mysql": "^2.15.0"
+  },
+  "optionalDependencies": {
+    "fsevents": "^1.0.0"
+  }
+}
