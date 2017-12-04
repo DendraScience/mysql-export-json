@@ -6,8 +6,9 @@
  * @module mysql-export-json
  */
 
-const EventEmitter = require('events')
 const Dot = require('dot-object')
+const EventEmitter = require('events')
+const {Transform} = require('stream')
 
 const BOOL_REGEX = /^(false|true)$/i
 
@@ -62,14 +63,15 @@ class Exporter extends EventEmitter {
     if (!query) throw new Error('Required: query')
 
     this.query = query
-
-    query.once('end', this._onEndHandler.bind(this))
-    query.once('error', this._onErrorHandler.bind(this))
-    query.on('result', this._onResultHandler.bind(this))
   }
 
   destroy () {
     this._dot = this._mods = this.connection = this.options = this.query = null
+  }
+
+  _dataForRow (row) {
+    Object.keys(row).forEach(key => this._mods.find(mod => mod(row, key, row[key])))
+    return this._dot ? this._dot.object(row) : row
   }
 
   _onEndHandler () {
@@ -85,13 +87,35 @@ class Exporter extends EventEmitter {
     this.connection.pause()
 
     try {
-      Object.keys(row).forEach(key => this._mods.find(mod => mod(row, key, row[key])))
-      this.emit('data', this._dot ? this._dot.object(row) : row)
+      this.emit('data', this._dataForRow(row))
     } catch (err) {
       this.emit('error', err)
     }
 
     this.connection.resume()
+  }
+
+  start () {
+    this.query.once('end', this._onEndHandler.bind(this))
+    this.query.once('error', this._onErrorHandler.bind(this))
+    this.query.on('result', this._onResultHandler.bind(this))
+  }
+
+  _transform (row, encoding, callback) {
+    try {
+      callback(null, this._dataForRow(row))
+    } catch (err) {
+      callback(err)
+    }
+  }
+
+  stream (options) {
+    const transform = new Transform({
+      objectMode: true,
+      transform: this._transform.bind(this)
+    })
+
+    return this.query.stream(options).pipe(transform)
   }
 }
 
